@@ -1,0 +1,27 @@
+.Button{
+  color:white  
+}
+.active{
+  background-color:red
+}
+
+.circle{
+  width: 40px;
+  height: 35px;
+
+}
+.bell{
+  color: black;
+  transform: rotate(20deg);
+  position: relative;
+}
+.dot {
+  height: 15px;
+  width: 15px;
+  background-color: rgb(240, 12, 12);
+  border-radius: 50%;
+  position: relative;
+  display: inline-block;
+  margin-bottom: 15px;
+  margin-left: -15px;
+}

@@ -1,0 +1,125 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { useTable, usePagination } from 'react-table'
+import { COLUMNS } from './columns'
+import './table.css'
+import { Button, PaginationItem } from 'reactstrap'
+import BackDrop from '../../../../components/Backdrop/Backdrop';
+import Spinner from '../../../../components/Spinner/Spinner';
+import axios from 'axios';
+import {useSelector} from 'react-redux';
+export const PaginationTable = () => {
+
+    const [data, setData] = useState([])
+    const [isLoading, setIsLoading] = useState(true)
+    let token=useSelector(state=>{
+        return state.auth.token;
+    })
+    
+    useEffect(() => {
+        setIsLoading(true)
+        axios.post('http://localhost:3000/api/campaign/getAllcampaigns','',{
+            headers:{
+                'x-token':token
+            }
+            })
+            .then(res => {
+                setIsLoading(false)
+                setData(res.data.data.rows.map(row => {
+                    return {
+                        'id' : row.clientCampaignNumber,
+                        'title' : row.title,
+                        'advertiser' : row.clientCompany.companyName,
+                        'actionRequiredBy' : row.statusWithPerson.firstName + ' ' + row.statusWithPerson.lastName,
+                        'nextActionDueBy' : 'Not Selected',
+                        'start' : 'Not Selected',
+                        'end' : 'Not Selected',
+                        'campaignID' : row.id,
+                    }
+                }))
+                console.log(res.rows)
+            })
+            .catch(err => {
+                setIsLoading(false)
+                alert("error"+err)
+            })
+    }, [])
+    // console.log(MOCK_DATA)
+    const columns = useMemo(() => COLUMNS, [])
+    
+    const {
+        getTableProps,
+        getTableBodyProps,
+        headerGroups,
+        page,
+        nextPage,
+        previousPage,
+        canPreviousPage,
+        canNextPage,
+        state,
+        setPageSize,
+        prepareRow
+    } = useTable(
+        {
+            columns,
+            data,
+            initialState: { pageIndex: 0 }
+        },
+        usePagination
+    )
+    const { pageIndex, pageSize } = state
+
+    return (
+        <>
+            <BackDrop show={isLoading}><Spinner /></BackDrop>
+            <table {...getTableProps()} >
+                <thead>
+                    {headerGroups.map(headerGroup => (
+                        <tr {...headerGroup.getHeaderGroupProps()}>
+                            {headerGroup.headers.map(column => (
+                                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+                            ))}
+                        </tr>
+                    ))}
+                </thead>
+                <tbody {...getTableBodyProps()}>
+                    {page.map(row => {
+                        prepareRow(row)
+                        return (
+                            <tr {...row.getRowProps()}>
+                                {row.cells.map(cell => {
+                                    return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                                })}
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
+            <div className="pagination">
+                <div className="rowPerPage">
+                    <span className='mr-2 fs-5'>Result per page:</span>
+                    <PaginationItem onClick={() => setPageSize(10)} active={pageSize === 10}>10
+                    </PaginationItem>|
+                    <PaginationItem onClick={() => setPageSize(15)} active={pageSize === 15}>15
+                    </PaginationItem>|
+                    <PaginationItem onClick={() => setPageSize(20)} active={pageSize === 20}>20
+                    </PaginationItem>
+
+
+                </div>
+
+                <div>
+                    <Button className='paginationButton' outline onClick={() => previousPage()} disabled={!canPreviousPage}>
+                        Prev
+                    </Button>
+                    <Button className='pageIndex'>
+                        {pageIndex + 1}
+                    </Button>
+                    <Button className='paginationButton' outline onClick={() => nextPage()} disabled={!canNextPage}>
+                        Next
+                    </Button>
+                </div>
+
+            </div>
+        </>
+    )
+}
